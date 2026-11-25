@@ -1,0 +1,280 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Profile Card Generator</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg1: #667eea; --bg2: #764ba2; --bg3: #f093fb;
+    --glass: rgba(255,255,255,.18); --glass-border: rgba(255,255,255,.35);
+    --text: #1f2340; --muted: #6a6f8f; --on-bg: #ffffff;
+    --card: #ffffff; --input: rgba(255,255,255,.92);
+    --accent: #6c5ce7; --accent2: #fd79a8;
+    --shadow: 0 10px 30px rgba(31,35,64,.18);
+  }
+  :root[data-theme="dark"] {
+    --bg1: #0f0c29; --bg2: #302b63; --bg3: #24243e;
+    --glass: rgba(255,255,255,.07); --glass-border: rgba(255,255,255,.14);
+    --text: #eceffd; --muted: #a3a8cc; --card: #1c1a3a; --input: rgba(20,18,50,.8);
+    --accent: #a29bfe; --shadow: 0 10px 30px rgba(0,0,0,.45);
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; min-height: 100vh; color: var(--text);
+    font-family: "Poppins", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    background: linear-gradient(135deg, var(--bg1), var(--bg2) 50%, var(--bg3));
+    background-size: 200% 200%; animation: flow 18s ease infinite;
+  }
+  @keyframes flow { 0%,100% { background-position: 0% 50%; } 50% { background-position: 100% 50%; } }
+  .blob { position: fixed; border-radius: 50%; filter: blur(60px); opacity: .45; z-index: 0; pointer-events: none; }
+  .blob.a { width: 320px; height: 320px; background: #ff9ff3; top: -80px; left: -80px; animation: float 14s ease-in-out infinite; }
+  .blob.b { width: 380px; height: 380px; background: #54a0ff; bottom: -120px; right: -100px; animation: float 18s ease-in-out infinite reverse; }
+  @keyframes float { 50% { transform: translate(40px, 30px) scale(1.1); } }
+
+  main { position: relative; z-index: 1; max-width: 960px; margin: 0 auto; padding: 36px 18px 70px; }
+  header { display: flex; align-items: center; justify-content: space-between; gap: 12px; color: var(--on-bg); }
+  .brand { display: flex; align-items: center; gap: 12px; }
+  .logo { width: 48px; height: 48px; border-radius: 14px; display: grid; place-items: center; font-size: 26px;
+    background: var(--glass); border: 1px solid var(--glass-border); backdrop-filter: blur(10px); }
+  h1 { margin: 0; font-size: 1.7rem; font-weight: 700; letter-spacing: -.5px; }
+  .tag { margin: 0; font-size: .85rem; opacity: .85; }
+  .theme { border: 1px solid var(--glass-border); background: var(--glass); color: var(--on-bg);
+    width: 44px; height: 44px; border-radius: 50%; font-size: 20px; cursor: pointer; backdrop-filter: blur(10px); transition: transform .25s; }
+  .theme:hover { transform: rotate(25deg) scale(1.08); }
+
+  .layout { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; margin-top: 26px; align-items: start; }
+  @media (max-width: 760px) { .layout { grid-template-columns: 1fr; } h1 { font-size: 1.4rem; } }
+
+  form { padding: 22px; border-radius: 22px; background: var(--glass); border: 1px solid var(--glass-border);
+    backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px); box-shadow: var(--shadow); color: var(--on-bg); }
+  .field { margin-bottom: 16px; }
+  label { display: flex; justify-content: space-between; font-size: .85rem; font-weight: 600; margin-bottom: 6px; }
+  label .opt { font-weight: 400; opacity: .7; }
+  .counter { font-weight: 400; opacity: .8; }
+  input, textarea { width: 100%; padding: 12px 14px; border: 2px solid transparent; border-radius: 12px; font: inherit; font-size: .95rem;
+    background: var(--input); color: var(--text); transition: border-color .2s, box-shadow .2s; }
+  textarea { min-height: 96px; resize: vertical; }
+  input::placeholder, textarea::placeholder { color: var(--muted); }
+  input:focus, textarea:focus { outline: none; border-color: var(--accent2); box-shadow: 0 0 0 4px rgba(253,121,168,.25); }
+  .invalid { border-color: #ff6b81 !important; }
+  .err { display: block; color: #ffe3ec; font-size: .8rem; margin-top: 6px; min-height: 0; }
+  .err:empty { display: none; }
+  .buttons { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 4px; }
+  button.primary { border: 0; border-radius: 999px; padding: 12px 26px; font: inherit; font-weight: 600; color: #fff; cursor: pointer;
+    background: linear-gradient(135deg, var(--accent), var(--accent2)); box-shadow: 0 8px 20px rgba(108,92,231,.45); transition: transform .15s, box-shadow .15s; }
+  button.primary:hover { transform: translateY(-2px); }
+  button.primary:active { transform: scale(.97); }
+  button.primary:disabled { opacity: .6; cursor: default; transform: none; }
+  button.ghost { border: 1px solid var(--glass-border); background: transparent; color: var(--on-bg); border-radius: 999px;
+    padding: 12px 20px; font: inherit; font-weight: 500; cursor: pointer; transition: background .15s; }
+  button.ghost:hover { background: var(--glass); }
+  #error { background: rgba(232,67,147,.35); color: #fff; border-radius: 10px; padding: 8px 12px; font-size: .88rem; margin: 14px 0 0; }
+  #error:empty { display: none; }
+
+  /* preview side */
+  .preview { min-height: 380px; display: grid; place-items: start center; }
+  .placeholder { width: 100%; text-align: center; color: var(--on-bg); padding: 70px 20px; border: 2px dashed var(--glass-border); border-radius: 22px; }
+  .placeholder .big { font-size: 56px; display: inline-block; animation: bob 2.5s ease-in-out infinite; }
+  .placeholder p { margin: 10px 0 0; opacity: .85; }
+  @keyframes bob { 50% { transform: translateY(-10px); } }
+
+  .card { width: 100%; max-width: 380px; border-radius: 24px; overflow: hidden; background: var(--card); color: var(--text);
+    box-shadow: 0 20px 50px rgba(31,35,64,.35); animation: pop .5s cubic-bezier(.2,.9,.3,1.2); }
+  @keyframes pop { from { opacity: 0; transform: translateY(24px) scale(.92); } }
+  .banner { height: 110px; background: linear-gradient(135deg, var(--c1), var(--c2)); position: relative; }
+  .banner::after { content: ""; position: absolute; inset: 0;
+    background: radial-gradient(circle at 20% 120%, rgba(255,255,255,.35), transparent 50%), radial-gradient(circle at 90% -20%, rgba(255,255,255,.3), transparent 45%); }
+  .avatar { width: 112px; height: 112px; border-radius: 50%; margin: -56px auto 0; position: relative; z-index: 1;
+    border: 5px solid var(--card); overflow: hidden; box-shadow: 0 8px 20px rgba(0,0,0,.2);
+    display: grid; place-items: center; background: linear-gradient(135deg, var(--c1), var(--c2)); color: #fff; font-size: 2.2rem; font-weight: 700; }
+  .avatar img { width: 100%; height: 100%; object-fit: cover; display: block; }
+  .body { padding: 14px 24px 24px; text-align: center; }
+  .body h2 { margin: 8px 0 0; font-size: 1.4rem; word-break: break-word; }
+  .handle { margin: 2px 0 0; font-size: .88rem; color: var(--muted); }
+  .bio { margin: 14px 0 0; line-height: 1.6; font-size: .94rem; word-wrap: break-word; }
+  .bio.none { color: var(--muted); font-style: italic; }
+  .chips { display: flex; justify-content: center; gap: 8px; margin-top: 16px; flex-wrap: wrap; }
+  .chip { font-size: .76rem; padding: 4px 12px; border-radius: 999px; background: color-mix(in srgb, var(--c1) 16%, transparent); color: var(--text); font-weight: 500; }
+  .foot { margin-top: 16px; padding-top: 12px; border-top: 1px dashed rgba(128,128,160,.35); font-size: .75rem; color: var(--muted); }
+  @media (prefers-reduced-motion: reduce) { * { animation: none !important; transition: none !important; } }
+</style>
+</head>
+<body>
+<div class="blob a"></div><div class="blob b"></div>
+
+<main>
+  <header>
+    <div class="brand">
+      <div class="logo">🪪</div>
+      <div>
+        <h1>Profile Card Generator</h1>
+        <p class="tag">Fill in your details. The server builds your card.</p>
+      </div>
+    </div>
+    <button class="theme" id="theme" type="button" aria-label="Toggle dark mode">🌙</button>
+  </header>
+
+  <div class="layout">
+    <form id="form" novalidate>
+      <div class="field">
+        <label for="name">Name</label>
+        <input id="name" maxlength="60" placeholder="e.g. ada lovelace" autocomplete="off">
+        <span class="err" id="err-name"></span>
+      </div>
+      <div class="field">
+        <label for="bio"><span>Bio <span class="opt">(optional)</span></span><span class="counter" id="count">0 / 300</span></label>
+        <textarea id="bio" maxlength="300" placeholder="A line or two about you…"></textarea>
+        <span class="err" id="err-bio"></span>
+      </div>
+      <div class="field">
+        <label for="image">Image URL <span class="opt">(optional)</span></label>
+        <input id="image" inputmode="url" placeholder="https://example.com/photo.jpg" autocomplete="off">
+        <span class="err" id="err-image_url"></span>
+      </div>
+      <div class="buttons">
+        <button class="primary" id="submit" type="submit">✨ Generate card</button>
+        <button class="ghost" id="sample" type="button">Fill sample</button>
+        <button class="ghost" id="reset" type="button">Clear</button>
+      </div>
+      <p id="error" role="alert"></p>
+    </form>
+
+    <section class="preview" aria-live="polite">
+      <div class="placeholder" id="placeholder">
+        <span class="big">🪪</span>
+        <p>Your profile card will appear here.</p>
+      </div>
+      <article class="card" id="card" hidden></article>
+    </section>
+  </div>
+</main>
+
+<script>
+const $ = (id) => document.getElementById(id);
+const form = $("form"), nameEl = $("name"), bioEl = $("bio"), imgEl = $("image");
+const submitBtn = $("submit"), errorEl = $("error"), cardEl = $("card"), placeholder = $("placeholder");
+
+// If the page was opened straight from disk (file://), talk to the local server explicitly.
+const API = location.protocol === "file:" ? "http://localhost:8000" : "";
+const NO_SERVER = "Can't reach the server. Run  python app.py  and open http://localhost:8000";
+const FIELDS = { name: nameEl, bio: bioEl, image_url: imgEl };
+
+/* ---------- theme ---------- */
+function setTheme(t) {
+  document.documentElement.dataset.theme = t;
+  $("theme").textContent = t === "dark" ? "☀️" : "🌙";
+  try { localStorage.setItem("theme", t); } catch (e) {}
+}
+let savedTheme = null;
+try { savedTheme = localStorage.getItem("theme"); } catch (e) {}
+setTheme(savedTheme || (matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light"));
+$("theme").addEventListener("click", () =>
+  setTheme(document.documentElement.dataset.theme === "dark" ? "light" : "dark"));
+
+/* ---------- form helpers ---------- */
+function clearErrors() {
+  errorEl.textContent = "";
+  for (const [key, el] of Object.entries(FIELDS)) {
+    el.classList.remove("invalid");
+    $("err-" + key).textContent = "";
+  }
+}
+function showFieldErrors(errors) {
+  for (const [key, msg] of Object.entries(errors)) {
+    if (FIELDS[key]) { FIELDS[key].classList.add("invalid"); $("err-" + key).textContent = msg; }
+  }
+  const first = Object.keys(errors).find((k) => FIELDS[k]);
+  if (first) FIELDS[first].focus();
+}
+bioEl.addEventListener("input", () => { $("count").textContent = bioEl.value.length + " / 300"; });
+
+$("sample").addEventListener("click", () => {
+  nameEl.value = "ada lovelace";
+  bioEl.value = "Mathematician and writer, widely regarded as the first computer programmer. Loves patterns, poetry and big ideas.";
+  imgEl.value = "https://i.pravatar.cc/300?img=47";
+  bioEl.dispatchEvent(new Event("input"));
+  clearErrors();
+});
+$("reset").addEventListener("click", () => {
+  form.reset();
+  bioEl.dispatchEvent(new Event("input"));
+  clearErrors();
+  cardEl.hidden = true;
+  placeholder.hidden = false;
+});
+
+/* ---------- render the card the server sent back ---------- */
+function el(tag, cls, text) {
+  const n = document.createElement(tag);
+  if (cls) n.className = cls;
+  if (text !== undefined) n.textContent = text;     // textContent => safe from XSS
+  return n;
+}
+function renderCard(c) {
+  cardEl.replaceChildren();
+  cardEl.style.setProperty("--c1", c.colors[0]);
+  cardEl.style.setProperty("--c2", c.colors[1]);
+
+  const avatar = el("div", "avatar");
+  const showInitials = () => { avatar.replaceChildren(document.createTextNode(c.initials)); };
+  if (c.image_url) {
+    const img = document.createElement("img");
+    img.alt = c.name + " profile photo";
+    img.referrerPolicy = "no-referrer";
+    img.addEventListener("error", showInitials);      // broken/blocked image -> initials
+    img.src = c.image_url;
+    avatar.appendChild(img);
+  } else {
+    showInitials();
+  }
+
+  const body = el("div", "body");
+  body.append(el("h2", "", c.name), el("p", "handle", c.handle));
+  body.append(c.bio ? el("p", "bio", c.bio) : el("p", "bio none", "No bio provided."));
+
+  const chips = el("div", "chips");
+  chips.append(
+    el("span", "chip", c.word_count + (c.word_count === 1 ? " word" : " words")),
+    el("span", "chip", c.char_count + " characters")
+  );
+  body.append(chips, el("div", "foot", "Generated " + new Date(c.created_at).toLocaleString()));
+
+  cardEl.append(el("div", "banner"), avatar, body);
+  placeholder.hidden = true;
+  cardEl.hidden = false;
+  // replay the pop-in animation on every generation
+  cardEl.style.animation = "none"; void cardEl.offsetWidth; cardEl.style.animation = "";
+}
+
+/* ---------- POST the form to the backend ---------- */
+form.addEventListener("submit", async (e) => {
+  e.preventDefault();
+  clearErrors();
+  submitBtn.disabled = true;
+  submitBtn.textContent = "Generating…";
+  try {
+    const res = await fetch(API + "/api/profile", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ name: nameEl.value, bio: bioEl.value, image_url: imgEl.value }),
+    });
+    const data = await res.json();
+    if (!res.ok) {
+      if (data.errors) showFieldErrors(data.errors);
+      else errorEl.textContent = data.error || "Something went wrong";
+      return;
+    }
+    renderCard(data.card);
+  } catch (err) {
+    errorEl.textContent = err instanceof TypeError ? NO_SERVER : err.message;
+  } finally {
+    submitBtn.disabled = false;
+    submitBtn.textContent = "✨ Generate card";
+  }
+});
+</script>
+</body>
+</html>
